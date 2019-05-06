@@ -28,7 +28,7 @@ const Home = () => (
 					<div id="login-separator">{ t('or') }</div>
 					<form id="login-form-email">
 						<div class="input-group">
-							<input type="email" id="input-email" class="form-control" placeholder="{ t('login_email_address') }" required autofocus>
+							<input type="email" id="input-email" class="form-control" placeholder="{ t('login_email_address') }" required autofocus />
 							<span class="input-group-btn">
 								<button class="btn btn-lg btn-primary" type="submit" id="signin-button-email">{ t('login_email_link') }</button>
 							</span>
@@ -36,14 +36,14 @@ const Home = () => (
 					</form>
 				</div>
 			</div>
-		</div> <!-- /container -->
+		</div>
 
 		<div class="container" id="login-done" hidden>
 			<div class="col-xs-12 col-md-8 col-lg-6 col-md-offset-2 col-lg-offset-3">
 				<h2>{ t('login_check_email') }</h2>
 				<p>{ t('login_check_email_text') }</p>
 			</div>
-		</div> <!-- /container -->
+		</div>
 
 		<div class="container" id="enrollment-email-issue" hidden>
 			<div class="col-xs-12 col-md-8 col-lg-6 col-md-offset-2 col-lg-offset-3">
@@ -76,8 +76,8 @@ const Home = () => (
 					{ t('candidates_explanation') }
 				</p>
 				<ul>
-					<li><strong>{ t('candidates_username %>:</strong> <%= candidates_item_1') }</li>
-					<li><strong>{ t('candidates_lastseen %>:</strong> <%= candidates_item_2') }</li>
+					<li><strong>{ t('candidates_username %>:</strong> <%= candidates_item_1') }</strong></li>
+					<li><strong>{ t('candidates_lastseen %>:</strong> <%= candidates_item_2') }</strong></li>
 				</ul>
 				<table class="table" id="user-candidates">
 					<thead>
