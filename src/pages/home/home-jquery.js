@@ -1,14 +1,16 @@
-var strings = {};
-var conf = {};
+export default function() {
+    const strings = {};
+    const conf = window.irma_keyshare_webclient;
+    const server = conf.keyshare_server_url;
 
-$(function() {
-    var server;
+    let user;
+    let logStart = 0, logNext = 0, logPrev = 0;
 
-    server = conf.keyshare_server_url;
     moment.locale(conf.language);
 
     IRMA.init(conf.api_server_url, {lang: conf.language, newServer: conf.new_api_server});
 
+    // -- UTIL FUNCTIONS --
     function loginSuccess() {
         console.log("Login success");
         $("#login-container").hide();
@@ -25,16 +27,17 @@ $(function() {
                                + "<strong>" + message + "</strong></div>");
     }
 
-    var showWarning = function(msg) {
+    const showWarning = function(msg) {
         $("#alert_box").html("<div class=\"alert alert-warning\" role=\"alert\">"
                              + "<strong>Warning:</strong> " + msg + "</div>");
     };
 
-    var showSuccess = function(msg) {
+    const showSuccess = function(msg) {
         $("#alert_box").html("<div class=\"alert alert-success\" role=\"alert\">"
                               + msg + "</div>");
     };
 
+    // -- VARIOUS --
     $("#login-form-irma").on("submit", function() {
         console.log("IRMA signin button pressed");
         $(".form-group").removeClass("has-error");
@@ -57,8 +60,8 @@ $(function() {
         $(".form-group").removeClass("has-error");
         $("#alert_box").empty();
 
-        var email = $("#input-email").prop("value");
-        var loginObject = { "email": email, "language": conf.language };
+        const email = $("#input-email").prop("value");
+        const loginObject = { "email": email, "language": conf.language };
 
         $.ajax({
             type: "POST",
@@ -97,8 +100,6 @@ $(function() {
             },
         });
     }
-
-    var user;
 
     $("#disable-btn").on("click", function() {
         BootstrapDialog.show({
@@ -221,10 +222,10 @@ $(function() {
             $("#no-known-email-addresses-text").show();
         }
 
-        var tableContent = $("#email-addresses-body");
+        const tableContent = $("#email-addresses-body");
         tableContent.empty();
-        for (var i = 0; i < user.emailAddresses.length; i++) {
-            var tr = $("<tr>").appendTo(tableContent);
+        for (let i = 0; i < user.emailAddresses.length; i++) {
+            const tr = $("<tr>").appendTo(tableContent);
             tr.append($("<td>", { text: user.emailAddresses[i] }));
             tr.append($("<button>", {
                 class: "btn btn-primary btn-sm",
@@ -290,8 +291,7 @@ $(function() {
         });
     }
 
-    var logStart = 0, logNext = 0, logPrev = 0;
-
+    // -- LOGS --
     function updateUserLogs() {
         console.log("Querying logs earlier than " + logStart);
         $.ajax({
@@ -318,10 +318,10 @@ $(function() {
             return;
 
         // Repopulate table
-        var tableContent = $("#user-logs-body");
+        const tableContent = $("#user-logs-body");
         tableContent.empty();
-        for (var i = 0; i < data.entries.length; i++) {
-            var entry = data.entries[i];
+        for (let i = 0; i < data.entries.length; i++) {
+            const entry = data.entries[i];
             tableContent.append("<tr><td title=\""
                     + moment(entry.time).format("dddd, D MMM YYYY, H:mm:ss")
                     + "\">"
@@ -359,8 +359,9 @@ $(function() {
         updateUserLogs();
     });
 
+    // -- LOGIN --
     function tryLoginFromCookie() {
-        var token = Cookies.get("token");
+        const token = Cookies.get("token");
         if (token !== undefined) {
             // Multiple user candidates were found, and we are not yet logged in
             // Fetch the candidates and render them in a table, allowing the user to choose one
@@ -380,8 +381,8 @@ $(function() {
             return;
         }
 
-        var sessionId = Cookies.get("sessionid");
-        var userId = Cookies.get("userid");
+        const sessionId = Cookies.get("sessionid");
+        const userId = Cookies.get("userid");
         if (sessionId !== undefined) {
             if (Cookies.get("enroll") === "true") {
                 getUserObject(userId, showEnrolled);
@@ -400,10 +401,10 @@ $(function() {
 
     function showUserCandidates(token, candidates) {
         $("#user-candidates-container").show();
-        var tableContent = $("#user-candidates-body");
-        var candidate;
-        var relTime, absTime = "";
-        for (var i = 0; i < candidates.length; i++) {
+        const tableContent = $("#user-candidates-body");
+        let candidate;
+        let relTime, absTime = "";
+        for (let i = 0; i < candidates.length; i++) {
             candidate = candidates[i];
             if (!Number.isInteger(candidate.lastActive) || candidate.lastActive === 0) {
                 relTime = strings.never;
@@ -436,6 +437,7 @@ $(function() {
         $("#login-container").show();
     }
 
+    // -- EMAIL ISSUING --
     function issueEmail(successCallback) {
         // Clear errors
         $(".form-group").removeClass("has-error");
@@ -482,9 +484,10 @@ $(function() {
         return false;
     });
 
+    // -- INIT --
     $("a.frontpage").attr("href", window.location.href.replace(window.location.hash, ""));
     if (!cookiesEnabled())
         showError(strings.keyshare_cookies);
     else
         tryLoginFromCookie();
-});
+};
