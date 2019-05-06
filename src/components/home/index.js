@@ -1,6 +1,6 @@
 import { Component } from 'preact';
 
-import homeJquery from './home-jquery';
+import legacy from './legacy';
 
 const t = () => 'translation';
 
@@ -13,7 +13,7 @@ export class Home extends Component {
 			new_api_server: true,
 		};
 
-		homeJquery();
+		legacy();
 	}
 
 	render() {
