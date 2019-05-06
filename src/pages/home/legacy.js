@@ -4,17 +4,16 @@ import Cookies from 'js-cookie';
 
 require('@privacybydesign/irmajs/dist/irma');
 
-export default function() {
+export default function({ config: conf, language }) {
     const strings = {};
-    const conf = window.irma_keyshare_webclient;
     const server = conf.keyshare_server_url;
 
     let user;
     let logStart = 0, logNext = 0, logPrev = 0;
 
-    moment.locale(conf.language);
+    moment.locale(language);
 
-    // IRMA.init(conf.api_server_url, {lang: conf.language, newServer: conf.new_api_server});
+    // IRMA.init(conf.irma_server_url, {lang: language, newServer: conf.new_api_server});
 
     // -- UTIL FUNCTIONS --
     function loginSuccess() {
@@ -52,8 +51,13 @@ export default function() {
         $.ajax({
             type: "GET",
             url: server + "/web/login-irma",
-            success: function(data) {
-                IRMA.verify(data, discloseSuccess, showWarning, showError);
+            success: function(request) {
+                window.irma.startSession(conf.irma_server_url, request)
+                .then((e) => console.log('hai', e))
+                .catch((e) => console.log('noes', e))
+
+
+                // IRMA.verify(data, discloseSuccess, showWarning, showError);
             },
             error: showError,
         });
@@ -67,7 +71,7 @@ export default function() {
         $("#alert_box").empty();
 
         const email = $("#input-email").prop("value");
-        const loginObject = { "email": email, "language": conf.language };
+        const loginObject = { "email": email, "language": language };
 
         $.ajax({
             type: "POST",

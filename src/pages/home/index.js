@@ -1,22 +1,19 @@
 import { Component } from 'preact';
 
+import { createT } from '../../lib/i18n';
+import config from '../../lib/config';
 import legacy from './legacy';
-
-const t = () => 'translation';
 
 export class Home extends Component {
 	componentDidMount() {
-		window.irma_keyshare_webclient = {
-			keyshare_server_url: '',
-			api_server_url: '',
-			language: 'nl',
-			new_api_server: true,
-		};
-
-		legacy();
+		const { language } = this.props;
+		legacy({ config, language });
 	}
 
 	render() {
+		const { language } = this.props;
+		const t = createT(language);
+
 		return (
 			<div>
 				<div class="container" id="alert_box">
@@ -35,7 +32,7 @@ export class Home extends Component {
 						</ul>
 
 						<div class="form-signin">
-							<h3 class="form-signin-heading">{ t('login_using ') }</h3>
+							<h3 class="form-signin-heading">{ t('login_using') }</h3>
 							<form id="login-form-irma">
 								<button class="btn btn-lg btn-primary btn-block" type="submit" id="signin-button-irma">IRMA</button>
 							</form>
@@ -90,8 +87,8 @@ export class Home extends Component {
 							{ t('candidates_explanation') }
 						</p>
 						<ul>
-							<li><strong>{ t('candidates_username %>:</strong> <%= candidates_item_1') }</strong></li>
-							<li><strong>{ t('candidates_lastseen %>:</strong> <%= candidates_item_2') }</strong></li>
+							<li><strong>{ t('candidates_username') }:</strong> { t('candidates_item_1') }</li>
+							<li><strong>{ t('candidates_lastseen') }:</strong> { t('candidates_item_2') }</li>
 						</ul>
 						<table class="table" id="user-candidates">
 							<thead>
@@ -117,27 +114,27 @@ export class Home extends Component {
 
 						<div id="issue-email-later" hidden>
 							<h3>{ t('main_issue_email') }</h3>
-							<p>{ t('main_issue_email_text ') }</p>
-							<button class="btn btn-primary issue-email-btn" id="issue-email-later-btn">{ t('main_issue_email_button ') }</button>
+							<p>{ t('main_issue_email_text') }</p>
+							<button class="btn btn-primary issue-email-btn" id="issue-email-later-btn">{ t('main_issue_email_button') }</button>
 						</div>
 
-						<h3>{ t('main_log ') }</h3>
-						<button class="btn" id="refresh-btn">{ t('main_log_refresh ') }</button>
-						<button class="btn" id="prev-btn"><span class="glyphicon glyphicon-chevron-left"></span> { t('main_log_previous ') }</button>
-						<button class="btn" id="next-btn">{ t('main_log_next ') } <span class="glyphicon glyphicon-chevron-right"></span></button>
+						<h3>{ t('main_log') }</h3>
+						<button class="btn" id="refresh-btn">{ t('main_log_refresh') }</button>
+						<button class="btn" id="prev-btn"><span class="glyphicon glyphicon-chevron-left"></span> { t('main_log_previous') }</button>
+						<button class="btn" id="next-btn">{ t('main_log_next') } <span class="glyphicon glyphicon-chevron-right"></span></button>
 						<table class="table" id="user-logs">
 							<thead>
 								<tr>
-									<th>{ t('main_when ') }</th>
-									<th>{ t('main_event ') }</th>
+									<th>{ t('main_when') }</th>
+									<th>{ t('main_event') }</th>
 								</tr>
 							</thead>
 							<tbody id="user-logs-body">
 							</tbody>
 						</table>
 
-						<h3>{ t('main_issuance ') }</h3>
-						{ t('main_issuance_text ') }
+						<h3>{ t('main_issuance') }</h3>
+						{ t('main_issuance_text') }
 
 						<div id="known-email-addresses">
 							<h3>{ t('main_emailaddresses_title') }</h3>
@@ -153,10 +150,10 @@ export class Home extends Component {
 							<button class="btn btn-primary issue-email-btn" id="add-email-btn">{ t('main_emailaddresses_add') }</button>
 						</div>
 
-						<h3>{ t('main_delete_title ') }</h3>
-						<p>{ t('main_delete_par1 ') }</p>
-						<p>{ t('main_delete_par2 ') }</p>
-						<button class="btn btn-danger" id="delete-btn" hidden>{ t('main_delete ') }</button>
+						<h3>{ t('main_delete_title') }</h3>
+						<p>{ t('main_delete_par1') }</p>
+						<p>{ t('main_delete_par2') }</p>
+						<button class="btn btn-danger" id="delete-btn" hidden>{ t('main_delete') }</button>
 					</div>
 				</div>
 			</div>

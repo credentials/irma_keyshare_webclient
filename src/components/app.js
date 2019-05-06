@@ -1,7 +1,7 @@
 import { h, Component } from 'preact';
 import { Router } from 'preact-router';
 
-import Home from './pages/Home';
+import Home from '../pages/home';
 
 export default class App extends Component {
 
@@ -13,7 +13,8 @@ export default class App extends Component {
 		return (
 			<div id="app">
 				<Router onChange={this.handleRoute}>
-					<Home path="/" />
+					<Home path="/" language="nl" />
+					<Home path="/en" language="en" />
 				</Router>
 			</div>
 		);
