@@ -1,4 +1,4 @@
-{
+export default {
 	"myirma": "MijnIRMA",
 	"login_header": "MijnIRMA login",
 	"login_par1": "Dit is de MijnIRMA website van de Privacy by Design Foundation. Als u IRMA gebruiker bent kunt u via deze pagina de activiteiten van uw IRMA app controleren en eventueel beëindigen.",
