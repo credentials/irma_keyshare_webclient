@@ -1,10 +1,21 @@
 import { Component } from 'preact';
-import style from './style';
+
 import homeJquery from './home-jquery';
 
 const t = () => 'translation';
 
 export class Home extends Component {
+	componentDidMount() {
+		window.irma_keyshare_webclient = {
+			keyshare_server_url: '',
+			api_server_url: '',
+			language: 'nl',
+			new_api_server: true,
+		};
+
+		homeJquery();
+	}
+
 	render() {
 		return (
 			<div>
@@ -31,7 +42,7 @@ export class Home extends Component {
 							<div id="login-separator">{ t('or') }</div>
 							<form id="login-form-email">
 								<div class="input-group">
-									<input type="email" id="input-email" class="form-control" placeholder="{ t('login_email_address') }" required autofocus />
+									<input type="email" id="input-email" class="form-control" placeholder={ t('login_email_address') } required autofocus />
 									<span class="input-group-btn">
 										<button class="btn btn-lg btn-primary" type="submit" id="signin-button-email">{ t('login_email_link') }</button>
 									</span>

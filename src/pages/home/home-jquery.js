@@ -1,3 +1,9 @@
+import moment from 'moment';
+import $ from 'jquery';
+import Cookies from 'js-cookie';
+
+require('@privacybydesign/irmajs/dist/irma');
+
 export default function() {
     const strings = {};
     const conf = window.irma_keyshare_webclient;
@@ -8,7 +14,7 @@ export default function() {
 
     moment.locale(conf.language);
 
-    IRMA.init(conf.api_server_url, {lang: conf.language, newServer: conf.new_api_server});
+    // IRMA.init(conf.api_server_url, {lang: conf.language, newServer: conf.new_api_server});
 
     // -- UTIL FUNCTIONS --
     function loginSuccess() {
