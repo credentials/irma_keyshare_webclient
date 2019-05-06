@@ -1,0 +1,21 @@
+image: privacybydesign/node_yarn:latest
+
+cache:
+  key: $CI_COMMIT_REF_SLUG
+  paths:
+  - node_modules
+
+stages:
+  - build
+
+before_script:
+  - set -euxo pipefail
+  - yarn install
+
+binaries:
+  stage: build
+  artifacts:
+    paths:
+      - build/*
+  script:
+    - yarn build --no-prerender
