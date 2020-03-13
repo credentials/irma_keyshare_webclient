@@ -1,5 +1,3 @@
 const conf = {
-    keyshare_server_url: "",
-    irma_server_url: "",
-    cookie_domain: undefined,
+    server: "http://127.0.0.1:8080",
 };

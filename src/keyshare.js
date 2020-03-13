@@ -1,6 +1,435 @@
 var strings = {};
 
-$.getScript("./config.js", function() {
+$(function() {
+    function showError(message) {
+        $("#alert_box").html("<div class=\"alert alert-danger\" role=\"alert\">"
+                                 + "<strong>" + message + "</strong></div>");
+    }
+
+    var showWarning = function(msg) {
+        $("#alert_box").html("<div class=\"alert alert-warning\" role=\"alert\">"
+                             + "<strong>Warning:</strong> " + msg + "</div>");
+    };
+
+    var showSuccess = function(msg) {
+        $("#alert_box").html("<div class=\"alert alert-success\" role=\"alert\">"
+                              + msg + "</div>");
+    };
+
+    function irmaSessionFailed(msg) {
+        if(msg === 'CANCELLED') {
+            showWarning(msg);
+        } else {
+            showError(msg);
+        }
+    };
+
+    $("#login-form-irma").on("submit", function() {
+        console.log("IRMA signin button pressed");
+        $("#alert_box").empty();
+
+        $.ajax({
+            type: "POST",
+            url: conf.server + "/login/irma",
+            dataType: "json",
+            success: function(qr) {
+                irma.handleSession(qr, {lang: conf.language})
+                    .then(reset, irmaSessionFailed);
+            },
+            error: showError,
+            xhrFields: {
+                withCredentials: true,
+            },
+        });
+
+        return false;
+    });
+
+    $("#login-form-email").on("submit", function() {
+        console.log("Email signin button pressed");
+        $("#alert_box").empty();
+
+        var email = $("#input-email").prop("value");
+        var loginObject = { "email": email, "language": conf.language };
+
+        $.ajax({
+            type: "POST",
+            dataType: "json",
+            contentType: "application/json;charset=utf-8",
+            url: conf.server + "/login/email",
+            data: JSON.stringify(loginObject),
+            success: function(){
+                console.log("Login success");
+                $("#login-container").hide();
+                $("#login-done").show();
+            },
+            error: showError,
+            xhrFields: {
+                withCredentials: true,
+            },
+        });
+
+        return false;
+    });
+
+    function showUserCandidates(token, candidates) {
+        $("#user-candidates-container").show();
+        var tableContent = $("#user-candidates-body");
+        var candidate;
+        var relTime, absTime = "";
+        for (var i = 0; i < candidates.length; i++) {
+            candidate = candidates[i];
+            if (!Number.isInteger(candidate.lastActive) || candidate.last_active === 0) {
+                relTime = strings.never;
+            } else {
+                absTime = moment.unix(candidate.last_active).format("dddd, D MMM YYYY, H:mm:ss");
+                relTime = moment.unix(candidate.last_active).fromNow();
+            }
+            tableContent.append("<tr><td>" + candidate.username
+                + "</td><td title='" + absTime + "'>" + relTime
+                + "</td><td id=login-" + i + "></td></tr>");
+            $("#login-" + i).append($("<button>", {
+                class: "btn btn-primary btn-sm",
+                text: strings.login,
+                // Ugly voodoo to capture the current value of candidate.username into the callback
+                click: (function (token, username) { return function() {
+                    $.ajax({
+                        type: "POST",
+                        url: conf.server + "/login/token",
+                        contentType: "application/json",
+                        data: JSON.stringify({token, username}),
+                        success: reset,
+                        error: function() {
+                            showError(strings.keyshare_verification_error);
+                        },
+                        xhrFields: {
+                            withCredentials: true,
+                        },
+                    });
+                };})(token, candidate.username),
+            }));
+        }
+    }
+
+    $("#logout-btn").on("click", function() {
+        $.ajax({
+            type: "POST",
+            url: conf.server + "/logout",
+            success: reset,
+            xhrFields: {
+                withCredentials: true,
+            },
+        });
+    });
+
+    $("#delete-btn").on("click", function() {
+        BootstrapDialog.show({
+            title: strings.keyshare_delete_question,
+            message: strings.keyshare_delete_message,
+            type: BootstrapDialog.TYPE_DANGER,
+            buttons: [{
+                id: "delete-cancel",
+                label: strings.keyshare_cancel,
+                cssClass: "btn-secondary",
+                action: function(dialogRef) {
+                    dialogRef.close();
+                },
+            }, {
+                id: "delete-confirm",
+                label: strings.keyshare_delete,
+                cssClass: "btn-danger",
+                action: function(dialogRef) {
+                    $.ajax({
+                        type: "POST",
+                        url: conf.server+"/user/delete",
+                        success: reset,
+                        error: showError,
+                        xhrFields: {
+                            withCredentials: true,
+                        },
+                    });
+                    dialogRef.close();
+                },
+            }],
+        });
+    });
+
+    function loadUserContainer() {
+        $.ajax({
+            type: "GET",
+            url: conf.server + "/user",
+            dataType: "json",
+            success: function(data) {
+                updateUserData(data);
+                $("#user-container").show();
+            },
+            error: function(error) {
+                showError(error);
+                $("#login-container").show();
+            }
+        });
+    }
+
+    function updateUserData(user) {
+        $("#username").text(user.username);
+        if (user.emails.length > 0) {
+            $("#no-known-email-addresses-text").hide();
+            $("#email-addresses-table").show();
+            $("#known-email-addresses-text").show();
+        } else {
+            $("#known-email-addresses-text").hide();
+            $("#email-addresses-table").hide();
+            $("#no-known-email-addresses-text").show();
+        }
+
+        var tableContent = $("#email-addresses-body");
+        tableContent.empty();
+        for (var i = 0; i < user.emails.length; i++) {
+            var tr = $("<tr>").appendTo(tableContent);
+            tr.append($("<td>", { text: user.emails[i] }));
+            tr.append($("<button>", {
+                class: "btn btn-primary btn-sm",
+                text: strings.keyshare_delete,
+                // Ugly voodoo to capture the current email address into the callback
+                click: (function (email) { return function() {
+                    confirmDeleteEmail(email);
+                };})(user.emails[i]),
+            }).wrap("<td>").parent());
+
+        }
+    }
+
+    function confirmDeleteEmail(email) {
+        BootstrapDialog.show({
+            title: strings.delete_email_title,
+            message: strings.delete_email_message,
+            type: BootstrapDialog.TYPE_PRIMARY,
+            buttons: [{
+                id: "delete-cancel",
+                label: strings.keyshare_cancel,
+                cssClass: "btn-secondary",
+                action: function(dialogRef) {
+                    dialogRef.close();
+                },
+            }, {
+                id: "delete-confirm",
+                label: strings.keyshare_delete,
+                cssClass: "btn-primary",
+                action: function(dialogRef) {
+                    $.ajax({
+                        type: "POST",
+                        contentType: "text/text;charset=utf-8",
+                        data: email,
+                        url: conf.server + "/email/remove",
+                        success: loadUserContainer,
+                        error: showError,
+                        xhrFields: {
+                            withCredentials: true,
+                        },
+                    });
+                    dialogRef.close();
+                },
+            }],
+        });
+    }
+
+    $("#add-email-btn").on("click", function() {
+        $.ajax({
+            type: "POST",
+            url: conf.server + "/email/add",
+            dataType: "json",
+            success: function(qr) {
+                irma.handleSession(qr, {lang: conf.language})
+                    .then(showEmailSuccess, irmaSessionFailed);
+            },
+            error: showError,
+            xhrFields: {
+                withCredentials: true,
+            },
+        });
+    });
+
+    function showEmailSuccess() {
+        // Check for errors via checksession, and then reload emails
+        $.ajax({
+            type: "POST",
+            dataType: "text",
+            url: conf.server+"/checksession",
+            success: function(status) {
+                if (status !== "ok") {
+                    reset();
+                } else {
+                    loadUserContainer();
+                }
+            },
+            error: showError,
+            xhrFields: {
+                withCredentials: true,
+            },
+        });
+    }
+
+    var logOffset = 0;
+
+    $("#refresh-btn").on("click", function() {
+        logStart = 0; // Ensures we fetch the most recent events
+        updateUserLogs();
+        loadUserContainer();
+    });
+
+    $("#prev-btn").on("click", function() {
+        if (logOffset == 0)
+            return;
+
+        logOffset = Math.max(0, logOffset-10);
+        updateUserLogs();
+    });
+
+    $("#next-btn").on("click", function() {
+        logOffset += 10;
+        updateUserLogs();
+    });
+
+
+    function updateUserLogs() {
+        $.ajax({
+            type: "GET",
+            url: conf.server+"/user/logs/"+logOffset,
+            dataType: "json",
+            success: function(entries) {
+                $("#next-btn").prop("disabled", entries.length !== 10);
+                $("#prev-btn").prop("disabled", logOffset === 0);
+
+                // Repopulate table
+                var tableContent = $("#user-logs-body");
+                tableContent.empty();
+                for (var i = 0; i < entries.length; i++) {
+                    var entry = entries[i];
+                    tableContent.append("<tr><td title=\""
+                            + moment(entry.time).format("dddd, D MMM YYYY, H:mm:ss")
+                            + "\">"
+                            + moment(entry.time).fromNow()
+                            + "</td><td>"
+                            + getEventString(entry) + "</td></tr>");
+                }
+            },
+            error: showError,
+            xhrFields: {
+                withCredentials: true,
+            }
+        });
+    }
+
+    function getEventString(entry) {
+        if (typeof strings === "undefined") {
+            // If strings are not yet loaded, fail silently
+            return "";
+        }
+        if (!("keyshare_event_" + entry.event in strings)) {
+            showError(strings.keyshare_event_error);
+            return "";
+        }
+        return strings["keyshare_event_" + entry.event].replace("{0}", entry.param);
+    }
+
+    function reset() {
+        logOffset = 0;
+        $.ajax({
+            type: "POST",
+            url: conf.server + "/checksession",
+            dataType: "text",
+            success: function(status) {
+                $("#login-container").hide();
+                $("#login-done").hide();
+                $("#user-container").hide();
+                $("#user-candidates-container").hide();
+                if (status === "expired") {
+                    $("#login-container").show();
+                } else if (status === "ok") {
+                    loadUserContainer()
+                    updateUserLogs()
+                } else {
+                    // TODO: Handle error better
+                    showError(status)
+                }
+            },
+            error: showError,
+            xhrFields: {
+                withCredentials: true,
+            },
+        });
+    }
+
+    function startup() {
+        // Reset state, and start over
+        $("#login-container").hide();
+        $("#login-done").hide();
+        $("#user-container").hide();
+        $("#user-candidates-container").hide();
+        $("#alert_box").empty();
+
+        var fragment = window.location.hash
+        if (fragment.startsWith("#token=")) {
+            $.ajax({
+                type: "POST",
+                url: conf.server + "/login/token/candidates",
+                dataType: "json",
+                data: fragment.substr(7),
+                success: function(candidates) {
+                    if (candidates.length === 1) {
+                        $.ajax({
+                            type: "POST",
+                            url: conf.server + "/login/token",
+                            contnetType: "application/json",
+                            data: JSON.stringify({token: fragment.substr(7), username: candidates[0].username}),
+                            success: reset,
+                            error: showError,
+                            xhrFields: {
+                                withCredentials: true,
+                            },
+                        });
+                    } else {
+                        showUserCandidates(fragment.substr(7), candidates);
+                    }
+                },
+                error: function(msg) {
+                    reset();
+                    showError(msg);
+                },
+                xhrFields: {
+                    withCredentials: true,
+                },
+            });
+            
+            return
+        }
+
+        $.ajax({
+            type: "POST",
+            url: conf.server + "/checksession",
+            dataType: "text",
+            success: function(status) {
+                if (status === "expired") {
+                    $("#login-container").show();
+                } else if (status === "ok") {
+                    loadUserContainer();
+                    updateUserLogs();
+                } else {
+                    // TODO: Handle error better
+                    showError(status)
+                }
+            },
+            error: showError,
+            xhrFields: {
+                withCredentials: true,
+            },
+        });
+    }
+
+    startup();
+});
+
+/*$.getScript("./config.js", function() {
     const irma_server_conf = {
         lang: conf.language,
         server: conf.irma_server_url,
@@ -497,4 +926,4 @@ $.getScript("./config.js", function() {
         showError(strings.keyshare_cookies);
     else
         tryLoginFromCookie();
-});
+});*/
