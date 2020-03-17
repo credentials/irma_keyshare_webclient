@@ -332,6 +332,11 @@ $(function() {
         return strings["keyshare_event_" + entry.event].replace("{0}", entry.param);
     }
 
+    $("#show-main").on("click", function() {
+        reset();
+        return false;
+    });
+
     function reset() {
         logOffset = 0;
         $.ajax({
@@ -343,6 +348,7 @@ $(function() {
                 $("#login-done").hide();
                 $("#user-container").hide();
                 $("#user-candidates-container").hide();
+                $("#enrollment-finished").hide();
                 if (status === "expired") {
                     $("#login-container").show();
                 } else if (status === "ok") {
@@ -366,6 +372,7 @@ $(function() {
         $("#login-done").hide();
         $("#user-container").hide();
         $("#user-candidates-container").hide();
+        $("#enrollment-finished").hide();
         $("#alert_box").empty();
 
         var fragment = window.location.hash
@@ -380,7 +387,7 @@ $(function() {
                         $.ajax({
                             type: "POST",
                             url: conf.server + "/login/token",
-                            contnetType: "application/json",
+                            contentType: "application/json",
                             data: JSON.stringify({token: fragment.substr(7), username: candidates[0].username}),
                             success: reset,
                             error: showError,
@@ -401,6 +408,26 @@ $(function() {
                 },
             });
             
+            return
+        }
+
+        if (fragment.startsWith("#verify=")) {
+            $.ajax({
+                type: "POST",
+                url: conf.server + "/verify",
+                contentType: "text/text",
+                data: fragment.substr(8),
+                success: function() {
+                    $("#enrollment-finished").show();
+                },
+                error: function(msg) {
+                    reset();
+                    showError(msg)
+                },
+                xhrFields: {
+                    withCredentials: true,
+                },
+            });
             return
         }
 
